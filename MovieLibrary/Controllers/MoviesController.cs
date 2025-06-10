@@ -23,21 +23,43 @@ namespace MovieLibrary.Controllers
         //GET: Movies/Create
         public IActionResult Create()
         {
-            return View();
+            return View("CreateEdit", new Movie());
+        }
+
+        public IActionResult Edit(int id)
+        {
+            var movie = _context.Movies.Find(id);
+            if (movie == null)
+            {
+                return NotFound();
+            }
+            return View("CreateEdit",movie);
         }
 
         //POST: Movies/Create
-        [HttpPost, ActionName("Create")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Movie movie)
+        public async Task<IActionResult> CreateEdit(Movie movie)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(movie);
+                if (string.IsNullOrWhiteSpace(movie.Description))
+                {
+                    movie.Description = "Bez popisu";
+                }
+
+                if (movie.Id == 0)
+                {
+                    _context.Add(movie);
+                }
+                else
+                {
+                    _context.Update(movie);
+                }
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(movie);
+            return View("CreateEdit", movie);
         }
 
         //POST: Movies/Delete

@@ -6,12 +6,13 @@
         border-collapse: collapse;
         table-layout: fixed; 
     }
-    .table th, .table td {
+    .table th, .table td{
         border: 1px solid #ddd;
         padding: 8px;
         text-align: left;
         vertical-align: middle;
     }
+
     .table th:last-child, .table td:last-child {
         border: none; 
         width: 100px; 
@@ -30,7 +31,7 @@
             <th>Popis</th>
             <th>Rok</th>
             <th>Režisér</th>
-            <th></th> <!-- Empty fifth header -->
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -50,10 +51,16 @@
                     <td>@movie.Year</td>
                     <td>@movie.Director</td>
                     <td>
-                        <form asp-action="Delete" asp-route-id="@movie.Id" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-danger action-button" 
-                            onclick="return confirm('Opravdu chceš smazat tento film?');">Smazat</button>
-                        </form>
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-primary action-button edit">Upravit</a>
+                            <form asp-action="Delete" asp-route-id="@movie.Id" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-danger action-button delete"
+                                        onclick="return confirm('Opravdu chceš smazat tento film?');">
+                                    Smazat
+                                </button>
+                            </form>
+                        </div>
+                            
                     </td>
                 </tr>
             }
