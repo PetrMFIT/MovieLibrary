@@ -9,9 +9,15 @@ namespace MovieLibrary.Models
         [Required]
         public string Title { get; set; }
         public string? Description { get; set; }
+
         [Display(Name = "Release Year")]
         public int Year { get; set; }
         public string? PosterUrl { get; set; }
         public string? Director { get; set; }
+
+        public Movie()
+        {
+            Description = "Bez popisu";
+        }
     }
 }

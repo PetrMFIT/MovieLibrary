@@ -1,25 +1,62 @@
-﻿@model IEnumerable<MovieLibrary.Models.Movie> 
+﻿@model IEnumerable<MovieLibrary.Models.Movie>
+
+<style>
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed; 
+    }
+    .table th, .table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+        vertical-align: middle;
+    }
+    .table th:last-child, .table td:last-child {
+        border: none; 
+        width: 100px; 
+        position: relative;
+    }
+</style>
 
 <h2>Seznam filmů</h2>
 
+<a asp-action="Create" class="btn btn-success mb-3">Přidat nový film</a>
+
 <table class="table">
-	<thead>
-		<tr>
-			<th>Název</th>
-			<th>Popis</th>
-			<th>Rok</th>
-			<th>Režisér</th>
-		</tr>
-	</thead>
-	<tbody>
-		@foreach (var movie in Model)
-		{
-			<tr>
-				<td>@movie.Title</td>
-				<td>@movie.Year</td>
-				<td>@movie.Description</td>
-				<td>@movie.Director</td>
-			</tr>
-		}
-	</tbody>
+    <thead>
+        <tr>
+            <th>Nazev</th>
+            <th>Popis</th>
+            <th>Rok</th>
+            <th>Režisér</th>
+            <th></th> <!-- Empty fifth header -->
+        </tr>
+    </thead>
+    <tbody>
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="5">Žádné filmy nebyly nalezeny.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var movie in Model)
+            {
+                <tr>
+                    <td>@movie.Title</td>
+                    <td>@movie.Description</td>
+                    <td>@movie.Year</td>
+                    <td>@movie.Director</td>
+                    <td>
+                        <form asp-action="Delete" asp-route-id="@movie.Id" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger action-button" 
+                            onclick="return confirm('Opravdu chceš smazat tento film?');">Smazat</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
 </table>
