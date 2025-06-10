@@ -4,31 +4,41 @@
 
 <form asp-action="CreateEdit" method="post">
     <input type="hidden" asp-for="Id" />
+    <!-- Title input -->
     <div class="form-group">
         <label asp-for="Title" class="control-label">Název</label>
         <input asp-for="Title" class="form-control" />
         <span asp-validation-for="Title" class="text-danger"></span>
     </div>
+
+    <!-- Description input -->
     <div class="form-group">
         <label asp-for="Description" class="control-label">Popis</label>
         <textarea asp-for="Description" class="form-control" rows="4" placeholder="Bez popisu"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
+
+    <!-- Release year input -->
     <div class="form-group">
-        <label asp-for="Year" class="control-label">Rok</label>
-        <select asp-for="Year" class="form-control">
+        <label asp-for="Year" class="control-label">Rok vydání</label>
+        <input asp-for="Year" list="rokList" type="number" class="form-control" min="1900" max=DateTime.Now.Year placeholder=@DateTime.Now.Year />
+        <datalist id="rokList">
             @for (int year = DateTime.Now.Year; year >= 1900; year--)
             {
                 <option value="@year" selected="@(Model.Year == year ? "selected" : null)">@year</option>
             }
-        </select>
+        </datalist>
         <span asp-validation-for="Year" class="text-danger"></span>
     </div>
+
+    <!-- Director input -->
     <div class="form-group">
         <label asp-for="Director" class="control-label">Režisér</label>
         <input asp-for="Director" class="form-control" />
         <span asp-validation-for="Director" class="text-danger"></span>
     </div>
+
+    <!-- Save/exit buttons -->
     <div class="form-group">
         <button type="submit" class="btn btn-success">Uložit</button>
         <a asp-action="Index" class="btn btn-secondary ml-2">Zrušit</a>

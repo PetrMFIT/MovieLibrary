@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MovieLibrary.Data;
 using MovieLibrary.Models;
+using System.Data;
 
 namespace MovieLibrary.Controllers
 {
@@ -14,18 +15,20 @@ namespace MovieLibrary.Controllers
             _context = context;
         }
 
+        //Movie list
         public IActionResult Index()
         {
             var movies = _context.Movies.ToList();
             return View(movies);
         }
 
-        //GET: Movies/Create
+        //GET: Create
         public IActionResult Create()
         {
             return View("CreateEdit", new Movie());
         }
 
+        //GET: Edit
         public IActionResult Edit(int id)
         {
             var movie = _context.Movies.Find(id);
@@ -36,16 +39,21 @@ namespace MovieLibrary.Controllers
             return View("CreateEdit",movie);
         }
 
-        //POST: Movies/Create
+        //POST: CreateEdit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateEdit(Movie movie)
         {
             if (ModelState.IsValid)
             {
+                //Empty input handeling
                 if (string.IsNullOrWhiteSpace(movie.Description))
                 {
                     movie.Description = "Bez popisu";
+                }
+                if (movie.Year == null)
+                {
+                    movie.Year = DateTime.Now.Year;
                 }
 
                 if (movie.Id == 0)

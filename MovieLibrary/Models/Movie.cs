@@ -6,12 +6,11 @@ namespace MovieLibrary.Models
     {
         public int Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Název je povinný.")]
         public string Title { get; set; }
         public string? Description { get; set; }
-        public int Year { get; set; }
+        public int? Year { get; set; }
         public string? PosterUrl { get; set; }
         public string? Director { get; set; }
-
     }
 }
