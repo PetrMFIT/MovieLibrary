@@ -12,15 +12,19 @@
         text-align: left;
         vertical-align: middle;
     }
-
     .table th:last-child, .table td:last-child {
         border: none; 
         width: 100px; 
         position: relative;
     }
+    .poster {
+        height: 200px;
+    }
 </style>
 
 <h2>Seznam filmů</h2>
+
+<a asp-controller="Movies" asp-action="TmdbSearch">Vyhledávání filmů</a>
 
 <a asp-action="Create" class="btn btn-success mb-3">Přidat nový film</a>
 
@@ -31,6 +35,7 @@
             <th>Popis</th>
             <th>Rok</th>
             <th>Režisér</th>
+            <th></th>
             <th></th>
         </tr>
     </thead>
@@ -50,6 +55,7 @@
                     <td>@movie.Description</td>
                     <td>@movie.Year</td>
                     <td>@movie.Director</td>
+                    <td><img src="@movie.PosterUrl" class="poster"/></td>
                     <td>
                         <div>
                             <a asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-primary action-button edit">Upravit</a>

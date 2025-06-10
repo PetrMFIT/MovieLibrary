@@ -1,0 +1,39 @@
+﻿@model List<MovieLibrary.Services.TmdbMovie>
+
+<h2>Vyhledávání filmů</h2>
+@{
+    var query = Context.Request.Query["query"].ToString();
+}
+
+<form method="get" asp-action="TmdbSearch">
+    <input type="text" name="query" placeholder="Název filmu" value="@query" />
+    <button type="submit">Hledat</button>
+</form>
+
+@if (Model.Count == 0)
+{
+    <p>Žádné výsledky</p>
+}
+else
+{
+    <ul>
+        @foreach (var movie in Model)
+        {
+            <li>
+                <strong>@movie.Title</strong> (@movie.ReleaseDate?.Split('-')[0])
+                <p>@movie.OriginalTitle</p>
+                <p>@movie.Overview</p>
+                @if (!string.IsNullOrEmpty(movie.PosterPath))
+                {
+                    <img src="@($"https://image.tmdb.org/t/p/w200{movie.PosterPath}")" alt="@movie.Title" />
+
+                }
+                @if (!string.IsNullOrEmpty(movie.BackgroundPath))
+                {
+                    <img src="@($"https://image.tmdb.org/t/p/w200{movie.BackgroundPath}")" alt="@movie.Title" />
+
+                }
+            </li>
+        }
+    </ul>
+}

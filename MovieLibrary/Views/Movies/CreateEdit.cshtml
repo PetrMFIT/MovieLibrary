@@ -38,6 +38,13 @@
         <span asp-validation-for="Director" class="text-danger"></span>
     </div>
 
+    <!-- Poster input -->
+    <div class="form-group">
+        <label asp-for="PosterUrl" class="control-label">Plakat</label>
+        <input asp-for="PosterUrl" class="form-control" type="url"/>
+        <span asp-validation-for="PosterUrl" class="text-danger"></span>
+    </div>
+
     <!-- Save/exit buttons -->
     <div class="form-group">
         <button type="submit" class="btn btn-success">Uložit</button>

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MovieLibrary.Data;
 using MovieLibrary.Models;
+using MovieLibrary.Services;
 using System.Data;
 
 namespace MovieLibrary.Controllers
@@ -9,10 +10,23 @@ namespace MovieLibrary.Controllers
     public class MoviesController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly TmdbService _tmdbService;
 
-        public MoviesController(AppDbContext context)
+        public MoviesController(AppDbContext context, TmdbService tmdbService)
         {
             _context = context;
+            _tmdbService = tmdbService;
+        }
+
+        public async Task<IActionResult> TmdbSearch(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return View(new List<TmdbMovie>());
+
+            var result = await _tmdbService.SearchMovieAsync(query);
+            var movies = result?.Results ?? new List<TmdbMovie>();
+
+            return View(movies);
         }
 
         //Movie list
