@@ -4,6 +4,10 @@
 
 <form asp-action="CreateEdit" method="post">
     <input type="hidden" asp-for="Id" />
+    <!-- Tmdb Searchbar -->
+    <input type="text" id="tmdb-search" placeholder="Hledat film..." class="form-control" />
+    <div id="tmdb-results" class="dropdown-menu" style="display: none; max-height: 300px; overflow: auto;"></div>
+
     <!-- Title input -->
     <div class="form-group">
         <label asp-for="Title" class="control-label">Název</label>
@@ -54,4 +58,58 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        $(document).ready(function () {
+            $("#tmdb-search").on("input",function () {
+                const query = $(this).val();
+
+                if (query.length < 2) {
+                    $("#tmdb-results").hide();
+                    return;
+                }
+
+                $.get("/Movies/TmdbSearch",{ term: query }, function (data) {
+                    const results = $("#tmdb-results");
+                    results.empty();
+
+                    if (data.length === 0) {
+                        results.hide();
+                        return;
+                    }
+
+                    data.forEach(movie => {
+                        const item = $(`
+                            <div class="dropdown-item d-flex align-items-center" style="cursor:pointer;">
+                                <img src="${movie.poster || ''}" alt="" style="width:60px; height:auto; margin-right:10px;" />
+                                <div>
+                                    <div><strong>${movie.title}</strong> (${movie.year || 'N/A'})</div>
+                                </div>
+                            </div>
+                            `);
+                        item.on("click", function() {
+                            $("input[name='Title']").val(movie.title);
+                            $("input[name='Year']").val(movie.year);
+                            //$("input[name='Director']").val(movie.director);
+                            $("textarea[name='Description']").val(movie.overview);
+                            $("input[name='PosterUrl']").val(movie.poster);
+                            results.hide();
+                        });
+
+                        results.append(item);
+                    });
+
+                    results.show();
+                });
+            });
+
+            $(document).on("click",function(e) {
+                if (!$(e.target).closest("#tmdb-search, #tmdb-results").length) {
+                    $("#tmdb-results").hide();
+                }
+            });
+        });
+    </script>
 }

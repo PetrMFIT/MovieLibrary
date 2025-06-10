@@ -18,15 +18,23 @@ namespace MovieLibrary.Controllers
             _tmdbService = tmdbService;
         }
 
-        public async Task<IActionResult> TmdbSearch(string query)
+        [HttpGet]
+        public async Task<IActionResult> TmdbSearch(string term)
         {
-            if (string.IsNullOrWhiteSpace(query))
-                return View(new List<TmdbMovie>());
+            if (string.IsNullOrWhiteSpace(term))
+                return Json(new List<object>());
 
-            var result = await _tmdbService.SearchMovieAsync(query);
-            var movies = result?.Results ?? new List<TmdbMovie>();
+            var result = await _tmdbService.SearchMovieAsync(term);
 
-            return View(movies);
+            var movies = result?.Results.Select(m => new
+            {
+                title = m.Title,
+                year = m.ReleaseDate?.Split('-')[0],
+                poster = string.IsNullOrEmpty(m.PosterPath) ? null : $"https://image.tmdb.org/t/p/w342{m.PosterPath}",
+                overview = m.Overview,
+            }).ToList();
+
+            return Json(movies);
         }
 
         //Movie list
