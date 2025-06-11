@@ -26,28 +26,34 @@ namespace MovieLibrary.Services
                 return null;
 
             var json = await response.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine("HERE" + json);
-
 
             var result = JsonSerializer.Deserialize <TmdbSearchResult>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             return result;
         }
 
-        public async Task<TmdbMovie?> GetMovieDetailsAsync(int tmdbId)
+        public async Task<TmdbMovie?> GetMovieCreditsAsync(int tmdbId)
         {
             var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={_apiKey}&language=cs-CZ&append_to_response=credits";
             var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
-            {
-                System.Diagnostics.Debug.WriteLine("HERE4" + url);
                 return null;
 
-            }
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<TmdbMovie>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return result;
+        }
+
+        public async Task<TmdbMovie?> GetMovieDetailsAsync(int tmdbId)
+        {
+            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={_apiKey}&language=cs-CZ";
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
 
             var json = await response.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine("HERE1" + json);
             var result = JsonSerializer.Deserialize<TmdbMovie>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return result;
         }

@@ -1,0 +1,68 @@
+﻿@model IEnumerable<MovieLibrary.Models.Person>
+
+<table>
+	<thead>
+		<tr>
+			<th>Jméno</th>
+			<th></th>
+			<th>Herecké filmy</th>
+			<th>Režiserské filmy</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		@if (!Model.Any())
+		{
+			<tr>
+				<td colspan="5">Žádné osoby nebyly nalezeny.</td>
+			</tr>
+		}
+		else
+		{
+			@foreach (var person in Model)
+			{
+				<tr>
+					<td>@person.Name</td>
+					<td><img src="@person.PhotoUrl" style="width: 100px; height: auto;" /></td>
+					<td>
+						@if (person.ActingMovies.Any())
+						{
+							<ul>
+								@foreach (var aMovie in person.ActingMovies)
+								{
+									<li>@aMovie.Movie.Title (@aMovie.Movie.Year)</li>
+								}
+							</ul>
+						}else
+						{
+							<span>-</span>
+						}
+					</td>
+					<td>
+						@if (person.DirectingMovies.Any())
+						{
+							<ul>
+								@foreach (var dMovie in person.DirectingMovies)
+								{
+									<li>@dMovie.Movie.Title (@dMovie.Movie.Year)</li>
+								}
+							</ul>
+						}
+						else
+						{
+							<span>-</span>
+						}
+					</td>
+					<td>
+						<form asp-action="Delete" asp-route-personId="@person.Id" method="post" style="display:inline;">
+							<button type="submit" class="btn btn-danger action-button delete"
+									onclick="return confirm('Opravdu chceš smazat tuto osobnost?');">
+								Smazat
+							</button>
+						</form>
+					</td>
+				</tr>
+			}
+		}
+	</tbody>
+</table>

@@ -4,6 +4,7 @@ using MovieLibrary.Data;
 using MovieLibrary.Migrations;
 using MovieLibrary.Models;
 using MovieLibrary.Services;
+using System;
 using System.Data;
 
 namespace MovieLibrary.Controllers
@@ -19,6 +20,7 @@ namespace MovieLibrary.Controllers
             _tmdbService = tmdbService;
         }
 
+        // Searching through TheMovieDatabase
         [HttpGet]
         public async Task<IActionResult> TmdbSearch(string term)
         {
@@ -26,6 +28,7 @@ namespace MovieLibrary.Controllers
             if (searchResult == null || !searchResult.Results.Any())
                 return Json(new List<object>());
 
+            // Saving main informations about movie
             var movies = searchResult.Results.Select(movie => new {
                 id = movie.Id,
                 title = movie.Title,
@@ -39,38 +42,36 @@ namespace MovieLibrary.Controllers
             return Json(movies);
         }
 
+        // Fetching movie detailas (cast, crew)
         [HttpGet]
         public async Task<IActionResult> TmdbMovieDetails(int tmdbId)
         {
             if (tmdbId <= 0)
                 return BadRequest("Neplatné TMDb ID.");
 
+            var credits = await _tmdbService.GetMovieCreditsAsync(tmdbId);
+
+            if (credits == null)
+                return Json(null);
+
             var details = await _tmdbService.GetMovieDetailsAsync(tmdbId);
             if (details == null)
-            {
-                System.Diagnostics.Debug.WriteLine("HERE3");
                 return Json(null);
-            }
                
             var result = new
             {
-                actors = details.Credits?.Cast?.Take(9).Select(a => new PersonDto
+                actors = credits.Credits?.Cast?.Take(9).Select(a => new PersonDto
                 {
                     Name = a.Name,
                     PhotoUrl = string.IsNullOrEmpty(a.ProfilePath) ? null : $"https://image.tmdb.org/t/p/w185{a.ProfilePath}"
                 }).ToList() ?? new List<PersonDto>(),
-                directors = details.Credits?.Crew?.Where(c => c.Job == "Director").Select(d => new PersonDto
+                directors = credits.Credits?.Crew?.Where(c => c.Job == "Director").Select(d => new PersonDto
                 {
                     Name = d.Name,
                     PhotoUrl = string.IsNullOrEmpty(d.ProfilePath) ? null : $"https://image.tmdb.org/t/p/w185{d.ProfilePath}"
                 }).ToList() ?? new List<PersonDto>()
             };
 
-            System.Diagnostics.Debug.WriteLine("HERE2: Actors Count = " + result.actors.Count);
-            foreach (var actor in result.actors)
-            {
-                System.Diagnostics.Debug.WriteLine($"Actor: Name = {actor.Name}, PhotoUrl = {actor.PhotoUrl}");
-            }
             return Json(result);
         }
 
@@ -82,12 +83,10 @@ namespace MovieLibrary.Controllers
         }
 
         //GET: Create
-        public async Task<IActionResult> Create()
+        public IActionResult Create()
         {
             return View("CreateEdit", new Movie());
         }
-
-
 
         //GET: Edit
         public IActionResult Edit(int id)
@@ -162,6 +161,16 @@ namespace MovieLibrary.Controllers
 
                 if (movie.Id == 0)
                 {
+                    if (TmdbId > 0)
+                    {
+                        var existing = await _context.Movies.FirstOrDefaultAsync(m => m.TmdbId == TmdbId);
+                        if (existing != null)
+                        {
+                            //return RedirectToAction("Edit", new { id = existing.Id });
+                            return RedirectToAction("Index");
+                        }
+                    }
+
                     // Create new movie
                     movie.Actors = actorEntities;
                     movie.Directors = directorEntities;
@@ -209,13 +218,38 @@ namespace MovieLibrary.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie != null)
+            var movie = await _context.Movies
+                .Include(m => m.Actors)
+                .Include(m => m.Directors)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (movie == null)
+                return RedirectToAction(nameof(Index));
+
+            _context.Movies.Remove(movie);
+            await _context.SaveChangesAsync();
+
+            var allPersonids = movie.Actors.Select(a => a.PersonId)
+                .Concat(movie.Directors.Select(d => d.PersonId))
+                .Distinct();
+
+            foreach (var personId in allPersonids)
             {
-                _context.Movies.Remove(movie);
-                await _context.SaveChangesAsync();
+                var isStillUsed = await _context.Actors.AnyAsync(a => a.PersonId == personId) 
+                                || await _context.Directors.AnyAsync(d =>  d.PersonId == personId);
+
+                if (!isStillUsed)
+                {
+                    var person = await _context.Persons.FindAsync(personId);
+                    if (person != null)
+                    {
+                        _context.Persons.Remove(person);
+                    }
+                }
             }
-            return RedirectToAction(nameof(Index));
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
         }
     }
 }
