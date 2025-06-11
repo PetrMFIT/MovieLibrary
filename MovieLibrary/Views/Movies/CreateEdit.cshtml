@@ -1,12 +1,53 @@
 ﻿@model MovieLibrary.Models.Movie
 
+<style>
+    .dropdown-item img {
+        max-width: 60px;
+        margin-right: 10px;
+    }
+
+    .input-group.mb-2 {
+        margin-bottom: 10px !important;
+    }
+
+    .form-control {
+        margin-right: 10px;
+    }
+
+    #tmdb-results {
+        max-height: 300px;
+        overflow-y: auto;
+        width: 100%;
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ddd;
+    }
+
+    .poster-preview {
+        max-width: 200px;
+        max-height: 200px;
+        margin-top: 10px;
+        display: none;
+    }
+
+    .validation-message {
+        color: #dc3545;
+        font-size: 0.875em;
+    }
+</style>
+
 <h2>@(Model.Id == 0 ? "Přidat nový film" : "Upravit film")</h2>
 
 <form asp-action="CreateEdit" method="post">
     <input type="hidden" asp-for="Id" />
-    <!-- Tmdb Searchbar -->
-    <input type="text" id="tmdb-search" placeholder="Hledat film..." class="form-control" />
-    <div id="tmdb-results" class="dropdown-menu" style="display: none; max-height: 300px; overflow: auto;"></div>
+    <input type="hidden" name="TmdbId" id="TmdbId" value="@Model.TmdbId" />
+    <!-- TMDb Searchbar -->
+    <div class="form-group">
+        <label class="control-label">Vyhledat film (TMDb)</label>
+        <input type="text" id="tmdb-search" placeholder="Hledat film..." class="form-control" />
+        <div id="tmdb-results" class="dropdown-menu" style="display: none;"></div>
+    </div>
 
     <!-- Title input -->
     <div class="form-group">
@@ -18,14 +59,14 @@
     <!-- Description input -->
     <div class="form-group">
         <label asp-for="Description" class="control-label">Popis</label>
-        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Bez popisu"></textarea>
+        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Zadejte popis"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
 
     <!-- Release year input -->
     <div class="form-group">
         <label asp-for="Year" class="control-label">Rok vydání</label>
-        <input asp-for="Year" list="rokList" type="number" class="form-control" min="1900" max=DateTime.Now.Year placeholder=@DateTime.Now.Year />
+        <input asp-for="Year" list="rokList" type="number" class="form-control" min="1900" max="@DateTime.Now.Year" placeholder="@DateTime.Now.Year" />
         <datalist id="rokList">
             @for (int year = DateTime.Now.Year; year >= 1900; year--)
             {
@@ -35,18 +76,81 @@
         <span asp-validation-for="Year" class="text-danger"></span>
     </div>
 
-    <!-- Director input -->
+    <!-- Actors input -->
     <div class="form-group">
-        <label asp-for="Director" class="control-label">Režisér</label>
-        <input asp-for="Director" class="form-control" />
-        <span asp-validation-for="Director" class="text-danger"></span>
+        <label class="control-label">Herci</label>
+        <div id="actors-container">
+            @if (Model.Actors != null && Model.Actors.Any())
+            {
+                @for (int i = 0; i < Model.Actors.Count; i++)
+                {
+                    <div class="input-group mb-2 actor-group">
+                        <input type="text" name="actors[@i]" class="form-control" value="@Model.Actors.ElementAt(i).Person?.Name" placeholder="Jméno herce" />
+                        <input type="hidden" name="actorPhotos[@i]" value="@Model.Actors.ElementAt(i).Person?.PhotoUrl" />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-danger remove-actor">Odebrat</button>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="input-group mb-2 actor-group">
+                    <input type="text" name="actors[0]" class="form-control" placeholder="Jméno herce" />
+                    <input type="hidden" name="actorPhotos[0]" value="" />
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-danger remove-actor">Odebrat</button>
+                    </div>
+                </div>
+            }
+        </div>
+        <button type="button" class="btn btn-secondary mt-2" id="add-actor">Přidat herce</button>
+    </div>
+
+    <!-- Directors input -->
+    <div class="form-group">
+        <label class="control-label">Režiséři</label>
+        <div id="directors-container">
+            @if (Model.Directors != null && Model.Directors.Any())
+            {
+                @for (int i = 0; i < Model.Directors.Count; i++)
+                {
+                    <div class="input-group mb-2 director-group">
+                        <input type="text" name="directors[@i]" class="form-control" value="@Model.Directors.ElementAt(i).Person?.Name" placeholder="Jméno režiséra" />
+                        <input type="hidden" name="directorPhotos[@i]" value="@Model.Directors.ElementAt(i).Person?.PhotoUrl" />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-danger remove-director">Odebrat</button>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="input-group mb-2 director-group">
+                    <input type="text" name="directors[0]" class="form-control" placeholder="Jméno režiséra" />
+                    <input type="hidden" name="directorPhotos[0]" value="" />
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-danger remove-director">Odebrat</button>
+                    </div>
+                </div>
+            }
+        </div>
+        <button type="button" class="btn btn-secondary mt-2" id="add-director">Přidat režiséra</button>
     </div>
 
     <!-- Poster input -->
     <div class="form-group">
-        <label asp-for="PosterUrl" class="control-label">Plakat</label>
-        <input asp-for="PosterUrl" class="form-control" type="url"/>
+        <label asp-for="PosterUrl" class="control-label">Plakát</label>
+        <input asp-for="PosterUrl" class="form-control" readonly />
         <span asp-validation-for="PosterUrl" class="text-danger"></span>
+        @if (!string.IsNullOrEmpty(Model.PosterUrl))
+        {
+            <div class="mt-2">
+                <p>Aktuální plakát:</p>
+                <img src="@Model.PosterUrl" alt="Plakát filmu" class="poster-preview" style="display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+                <span class="validation-message" style="display:none;">Obrázek nelze načíst</span>
+            </div>
+        }
     </div>
 
     <!-- Save/exit buttons -->
@@ -58,57 +162,171 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
     <script>
         $(document).ready(function () {
-            $("#tmdb-search").on("input",function () {
-                const query = $(this).val();
+            var tmdbSearch = $('#tmdb-search');
+            var tmdbResults = $('#tmdb-results');
+            var tmdbIdInput = $('#TmdbId');
 
+            // TMDb search
+            tmdbSearch.on('input', function () {
+                var query = $(this).val().trim();
                 if (query.length < 2) {
-                    $("#tmdb-results").hide();
+                    tmdbResults.hide().empty();
                     return;
                 }
 
-                $.get("/Movies/TmdbSearch",{ term: query }, function (data) {
-                    const results = $("#tmdb-results");
-                    results.empty();
-
-                    if (data.length === 0) {
-                        results.hide();
+                $.get('/Movies/TmdbSearch', { term: query }, function (data) {
+                    tmdbResults.empty();
+                    if (!data.length) {
+                        tmdbResults.hide();
                         return;
                     }
 
                     data.forEach(movie => {
-                        const item = $(`
+                        var item = $(`
                             <div class="dropdown-item d-flex align-items-center" style="cursor:pointer;">
-                                <img src="${movie.poster || ''}" alt="" style="width:60px; height:auto; margin-right:10px;" />
+                                <img src="${movie.poster || ''}" alt="" style="width:60px; height:auto; margin-right:10px;" onerror="this.src='';"/>
                                 <div>
                                     <div><strong>${movie.title}</strong> (${movie.year || 'N/A'})</div>
                                 </div>
                             </div>
-                            `);
-                        item.on("click", function() {
-                            $("input[name='Title']").val(movie.title);
-                            $("input[name='Year']").val(movie.year);
-                            //$("input[name='Director']").val(movie.director);
-                            $("textarea[name='Description']").val(movie.overview);
-                            $("input[name='PosterUrl']").val(movie.poster);
-                            results.hide();
-                        });
-
-                        results.append(item);
+                        `).data('tmdbId', movie.id).data('title', movie.title).data('originalTitle',movie. originalTitle).data('year', movie.year).data('poster', movie.poster).data('background', movie.background).data('description', movie.description);
+                        tmdbResults.append(item);
                     });
-
-                    results.show();
+                    tmdbResults.show();
+                }).fail(function () {
+                    alert('Chyba při hledání filmů.');
+                    tmdbResults.hide();
                 });
             });
 
-            $(document).on("click",function(e) {
-                if (!$(e.target).closest("#tmdb-search, #tmdb-results").length) {
-                    $("#tmdb-results").hide();
+            // TMDb result click
+            tmdbResults.on('click', '.dropdown-item', function () {
+                var tmdbId = $(this).data('tmdbId');
+                var title = $(this).data('title');
+                var year = $(this).data('year');
+                var poster = $(this).data('poster');
+                var description = $(this).data('description');
+
+                if (!tmdbId) {
+                    alert('Neplatné ID filmu.');
+                    return;
                 }
+
+                // Set TmdbId
+                tmdbIdInput.val(tmdbId);
+
+                // Fetch detailed movie info including cast and crew
+                $.get('/Movies/TmdbMovieDetails', { tmdbId: tmdbId }, function (details) {
+                    if (!details) {
+                        alert('Nepodařilo se načíst detaily filmu.');
+                        return;
+                    }
+
+                    // Populate fields
+                    $('#Title').val(title);
+                    $('#Description').val(description || 'Bez popisu');
+                    $('#Year').val(year);
+                    $('#PosterUrl').val(poster);
+                    if (poster) {
+                        $('.poster-preview').attr('src', poster).show();
+                        $('.validation-message').hide();
+                    } else {
+                        $('.poster-preview').hide();
+                        $('.validation-message').show();
+                    }
+
+                    // Clear and populate actors
+                    $('#actors-container').empty();
+                    details.actors.forEach((actor, i) => {
+                        var actorGroup = $(`
+                            <div class="input-group mb-2 actor-group">
+                                <input type="text" name="actors[${i}]" class="form-control" value="${actor.name}" placeholder="Jméno herce"/>
+                                <input type="hidden" name="actorPhotos[${i}]" value="${actor.photoUrl || ''}"/>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-danger remove-actor">Odebrat</button>
+                                </div>
+                            </div>
+                        `);
+                        $('#actors-container').append(actorGroup);
+                    });
+                    if (!details.actors.length) {
+                        $('#add-actor').click();
+                    }
+
+                    // Clear and populate directors
+                    $('#directors-container').empty();
+                    details.directors.forEach((director, i) => {
+                        var directorGroup = $(`
+                            <div class="input-group mb-2 director-group">
+                                <input type="text" name="directors[${i}]" class="form-control" value="${director.name}" placeholder="Jméno režiséra"/>
+                                <input type="hidden" name="directorPhotos[${i}]" value="${director.photoUrl || ''}"/>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-danger remove-director">Odebrat</button>
+                                </div>
+                            </div>
+                        `);
+                        $('#directors-container').append(directorGroup);
+                    });
+                    if (!details.directors.length) {
+                        $('#add-director').click();
+                    }
+
+                    tmdbResults.hide().empty();
+                    tmdbSearch.val('');
+                }).fail(function () {
+                    alert('Chyba při načítání detailů filmu.');
+                    tmdbResults.hide();
+                });
+            });
+
+            // Hide results on click outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#tmdb-search, #tmdb-results').length) {
+                    tmdbResults.hide();
+                }
+            });
+
+            // Add actor
+            $('#add-actor').on('click', function () {
+                var index = $('#actors-container .actor-group').length;
+                var actorGroup = $(`
+                    <div class="input-group mb-2 actor-group">
+                        <input type="text" name="actors[${index}]" class="form-control" placeholder="Jméno herce"/>
+                        <input type="hidden" name="actorPhotos[${index}]" value="" />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-danger remove-actor">Odebrat</button>
+                        </div>
+                    </div>
+                `);
+                $('#actors-container').append(actorGroup);
+            });
+
+            // Add director
+            $('#add-director').on('click', function () {
+                var index = $('#directors-container .director-group').length;
+                var directorGroup = $(`
+                    <div class="input-group mb-2 director-group">
+                        <input type="text" name="directors[${index}]" class="form-control" placeholder="Jméno režiséra"/>
+                        <input type="hidden" name="directorPhotos[${index}]" value="" />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-danger remove-director">Odebrat</button>
+                        </div>
+                    </div>
+                `);
+                $('#directors-container').append(directorGroup);
+            });
+
+            // Remove actor
+            $(document).on('click', '.remove-actor', function () {
+                $(this).closest('.actor-group').remove();
+            });
+
+            // Remove director
+            $(document).on('click', '.remove-director', function () {
+                $(this).closest('.director-group').remove();
             });
         });
     </script>

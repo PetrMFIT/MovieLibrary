@@ -25,8 +25,6 @@
 
 <h2>Seznam filmů</h2>
 
-<a asp-controller="Movies" asp-action="TmdbSearch">Vyhledávání filmů</a>
-
 <a asp-action="Create" class="btn btn-success mb-3">Přidat nový film</a>
 
 <table class="table">
@@ -55,7 +53,6 @@
                     <td>@movie.Title</td>
                     <td>@movie.Description</td>
                     <td>@movie.Year</td>
-                    <td>@movie.Director</td>
                     <td><img src="@movie.PosterUrl" class="poster"/></td>
                     <td>
                         <div>

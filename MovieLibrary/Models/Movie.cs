@@ -11,6 +11,10 @@ namespace MovieLibrary.Models
         public string? Description { get; set; }
         public int? Year { get; set; }
         public string? PosterUrl { get; set; }
-        public string? Director { get; set; }
+        
+        public ICollection<Actor> Actors { get; set; } = new List<Actor>();
+        public ICollection<Director> Directors { get; set; } = new List<Director>();
+
+        public int TmdbId { get; set; }
     }
 }

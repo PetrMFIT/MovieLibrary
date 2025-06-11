@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using MovieLibrary.Models;
+using System.Net.Http;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -31,6 +33,24 @@ namespace MovieLibrary.Services
 
             return result;
         }
+
+        public async Task<TmdbMovie?> GetMovieDetailsAsync(int tmdbId)
+        {
+            var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={_apiKey}&language=cs-CZ&append_to_response=credits";
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine("HERE4" + url);
+                return null;
+
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine("HERE1" + json);
+            var result = JsonSerializer.Deserialize<TmdbMovie>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return result;
+        }
     }
 
     public class TmdbSearchResult
@@ -42,8 +62,41 @@ namespace MovieLibrary.Services
 
     }
 
+    public class TmdbCredits
+    {
+        [JsonPropertyName("cast")]
+        public List<TmdbCast>? Cast { get; set; }
+
+        [JsonPropertyName("crew")]
+        public List<TmdbCrew>? Crew { get; set; }
+    }
+
+    public class TmdbCast
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "";
+
+        [JsonPropertyName("profile_path")]
+        public string? ProfilePath { get; set; }
+    }
+
+    public class TmdbCrew
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = "";
+
+        [JsonPropertyName("job")]
+        public string Job { get; set; } = "";
+
+        [JsonPropertyName("profile_path")]
+        public string? ProfilePath { get; set; }
+    }
+
     public class TmdbMovie
     {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
         [JsonPropertyName("title")]
         public string Title { get; set; }
 
@@ -61,5 +114,8 @@ namespace MovieLibrary.Services
 
         [JsonPropertyName("backdrop_path")]
         public string BackgroundPath { get; set; }
+
+        [JsonPropertyName("credits")]
+        public TmdbCredits? Credits { get; set; }
     }
 }
