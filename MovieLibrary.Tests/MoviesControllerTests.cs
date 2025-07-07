@@ -16,11 +16,12 @@ public class MoviesControllerTests
             .UseInMemoryDatabase(databaseName: dbName)
             .Options;
 
-
         return new AppDbContext(options);
     }
 
-    // Movie test
+    /*** Movie Tests ***/
+
+    // Add Movie
     [Fact]
     public async Task InsertMovieIntoDatabase()
     {
@@ -40,6 +41,7 @@ public class MoviesControllerTests
         Assert.IsType<RedirectToActionResult>(result);
     }
 
+    // Edit Movie
     [Fact]
     public async Task EditMovieDatabase()
     {
@@ -67,6 +69,7 @@ public class MoviesControllerTests
         Assert.IsType<RedirectToActionResult>(result);
     }
 
+    // Delete Movie
     [Fact]
     public async Task DeleteMovieFromDatabase()
     {
@@ -87,7 +90,64 @@ public class MoviesControllerTests
         Assert.IsType<RedirectToActionResult>(result);
     }
 
-    // Person tests
+    // Delete Movie and orphaned actor
+    [Fact]
+    public async Task DeleteMovieAndActor()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        var context = GetDbContext(dbName);
+        var movie = new Movie { Title = "Test Movie", Year = 2025 };
+        var person = new Person { Name = "Test Actor"};
+
+        context.Movies.Add(movie);
+        context.Persons.Add(person);
+        var actor = new Actor {  MovieId = movie.Id, PersonId = person.Id };
+        context.Actors.Add(actor);
+        await context.SaveChangesAsync();
+
+        var controller = new MoviesController(context, null);
+
+        var result = await controller.Delete(movie.Id);
+
+        var verificationContext = GetDbContext(dbName);
+        var deletedActor = await verificationContext.Persons.FirstOrDefaultAsync(a => a.Name == "Test Actor");
+
+        Assert.Null(deletedActor);
+        Assert.IsType<RedirectToActionResult>(result);
+    }
+
+    // Delete Movie if actors are in another movie
+    [Fact]
+    public async Task DeleteMovieAndNotActor()
+    {
+        var dbName = Guid.NewGuid().ToString();
+        var context = GetDbContext(dbName);
+        var movie1 = new Movie { Title = "Test Movie1", Year = 2024 };
+        var movie2 = new Movie { Title = "Test Movie2", Year = 2025 };
+        var person = new Person { Name = "Test Actor" };
+
+        context.Movies.AddRange(movie1, movie2);
+        context.Persons.Add(person);
+        var actor1 = new Actor { MovieId = movie1.Id, PersonId = person.Id };
+        var actor2 = new Actor { MovieId = movie2.Id, PersonId = person.Id };
+        context.Actors.AddRange(actor1, actor2);
+        await context.SaveChangesAsync();
+
+        var controller = new MoviesController(context, null);
+
+        var result = await controller.Delete(movie1.Id);
+
+        var verificationContext = GetDbContext(dbName);
+        var deletedActor = await verificationContext.Persons.FirstOrDefaultAsync(a => a.Name == "Test Actor");
+
+        Assert.NotNull(deletedActor);
+        Assert.IsType<RedirectToActionResult>(result);
+    }
+
+
+    /*** Person Tests ***/
+
+    // Add Actor to db
     [Fact]
     public async Task InsertActorIntoDatabase()
     {
@@ -106,6 +166,7 @@ public class MoviesControllerTests
         Assert.IsType<RedirectToActionResult>(result);
     }
 
+    // Add Actor to movie
     [Fact]
     public async Task InsertActorIntoMovie()
     {
@@ -127,6 +188,7 @@ public class MoviesControllerTests
         Assert.IsType<RedirectToActionResult>(result);
     }
 
+    // Add Director to db
     [Fact]
     public async Task InsertDIrectorIntoDatabase()
     {
@@ -145,6 +207,7 @@ public class MoviesControllerTests
         Assert.IsType<RedirectToActionResult>(result);
     }
 
+    // Add Director to movie
     [Fact]
     public async Task InsertDirectorIntoMovie()
     {
