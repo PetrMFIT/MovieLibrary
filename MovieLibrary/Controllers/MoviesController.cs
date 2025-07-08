@@ -12,9 +12,9 @@ namespace MovieLibrary.Controllers
     public class MoviesController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly TmdbService _tmdbService;
+        private readonly ITmdbService _tmdbService;
 
-        public MoviesController(AppDbContext context, TmdbService tmdbService)
+        public MoviesController(AppDbContext context, ITmdbService tmdbService)
         {
             _context = context;
             _tmdbService = tmdbService;
@@ -29,14 +29,14 @@ namespace MovieLibrary.Controllers
                 return Json(new List<object>());
 
             // Saving main informations about movie
-            var movies = searchResult.Results.Select(movie => new {
-                id = movie.Id,
-                title = movie.Title,
-                originalTitle = movie.OriginalTitle,
-                description = movie.Overview,
-                year = string.IsNullOrEmpty(movie.ReleaseDate) ? "" : movie.ReleaseDate.Substring(0, 4),
-                poster = string.IsNullOrEmpty(movie.PosterPath) ? "" : $"https://image.tmdb.org/t/p/w342{movie.PosterPath}",
-                background = string.IsNullOrEmpty(movie.BackgroundPath) ? "" : $"https://image.tmdb.org/t/p/w342{movie.BackgroundPath}"
+            var movies = searchResult.Results.Select(movie => new MovieDto {
+                Id = movie.Id,
+                Title = movie.Title,
+                OriginalTitle = movie.OriginalTitle,
+                Description = movie.Overview,
+                Year = string.IsNullOrEmpty(movie.ReleaseDate) ? "" : movie.ReleaseDate.Substring(0, 4),
+                Poster = string.IsNullOrEmpty(movie.PosterPath) ? "" : $"https://image.tmdb.org/t/p/w342{movie.PosterPath}",
+                Background = string.IsNullOrEmpty(movie.BackgroundPath) ? "" : $"https://image.tmdb.org/t/p/w342{movie.BackgroundPath}"
             }).ToList();
 
             return Json(movies);

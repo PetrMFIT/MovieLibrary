@@ -1,10 +1,14 @@
 ﻿using MovieLibrary.Controllers;
 using MovieLibrary.Data;
 using MovieLibrary.Models;
+using MovieLibrary.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
+using Moq;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace MovieLibrary.Tests;
 
@@ -15,9 +19,10 @@ public class MoviesControllerTests
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(databaseName: dbName)
             .Options;
-
+        
         return new AppDbContext(options);
     }
+
 
     /*** Movie Tests ***/
 
@@ -228,4 +233,47 @@ public class MoviesControllerTests
         Assert.NotNull(insertedPerson);
         Assert.IsType<RedirectToActionResult>(result);
     }
+
+
+    /*** Tmdb Service Tests ***/
+
+    // Search movie
+    [Fact]
+    public async Task SearchMovieResultExist()
+    {
+        var mockTmdb = new Mock<ITmdbService>();
+        var movie = new TmdbMovie
+        {
+            Id = 123,
+            Title = "Test Movie",
+            OriginalTitle = "Test Movie Original",
+            Overview = "Description"
+        };
+
+        var searchResult = new TmdbSearchResult
+        {
+            Results = new List<TmdbMovie> { movie },
+            Page = 1,
+            TotalResults = 1,
+            TotalPages = 1
+        };
+
+        mockTmdb.Setup(s => s.SearchMovieAsync("test")).ReturnsAsync(searchResult);
+
+        var controller = new MoviesController(null, mockTmdb.Object);
+
+        var result = await controller.TmdbSearch("test") as JsonResult;
+
+        Assert.NotNull(result);
+        var data = Assert.IsType<List<MovieDto>>(result.Value);
+        Assert.Single(data);
+
+        var movieDto = data[0];
+
+        Assert.Equal(123, movieDto.Id);
+        Assert.Equal(movieDto.Title, "Test Movie");
+        Assert.Equal(movieDto.OriginalTitle, "Test Movie Original");
+        Assert.Equal(movieDto.Description, "Description");
+    }
 }
+

@@ -6,7 +6,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace MovieLibrary.Services
 {
-    public class TmdbService
+    public class TmdbService : ITmdbService
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
