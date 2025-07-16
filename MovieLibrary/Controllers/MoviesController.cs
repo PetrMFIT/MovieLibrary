@@ -49,30 +49,12 @@ namespace MovieLibrary.Controllers
             if (tmdbId <= 0)
                 return BadRequest("Neplatné TMDb ID.");
 
-            var credits = await _tmdbService.GetMovieCreditsAsync(tmdbId);
+            var detail = await _tmdbService.GetMovieWithCreditsAsync(tmdbId);
 
-            if (credits == null)
-                return Json(null);
-
-            var details = await _tmdbService.GetMovieDetailsAsync(tmdbId);
-            if (details == null)
+            if (detail == null)
                 return Json(null);
                
-            var result = new
-            {
-                actors = credits.Credits?.Cast?.Take(9).Select(a => new PersonDto
-                {
-                    Name = a.Name,
-                    PhotoUrl = string.IsNullOrEmpty(a.ProfilePath) ? null : $"https://image.tmdb.org/t/p/w185{a.ProfilePath}"
-                }).ToList() ?? new List<PersonDto>(),
-                directors = credits.Credits?.Crew?.Where(c => c.Job == "Director").Select(d => new PersonDto
-                {
-                    Name = d.Name,
-                    PhotoUrl = string.IsNullOrEmpty(d.ProfilePath) ? null : $"https://image.tmdb.org/t/p/w185{d.ProfilePath}"
-                }).ToList() ?? new List<PersonDto>()
-            };
-
-            return Json(result);
+            return Json(detail);
         }
 
         //Movie list

@@ -32,7 +32,7 @@ namespace MovieLibrary.Services
             return result;
         }
 
-        public async Task<TmdbMovie?> GetMovieCreditsAsync(int tmdbId)
+        public async Task<TmdbMovieDto?> GetMovieWithCreditsAsync(int tmdbId)
         {
             var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={_apiKey}&language=cs-CZ&append_to_response=credits";
             var response = await _httpClient.GetAsync(url);
@@ -42,7 +42,28 @@ namespace MovieLibrary.Services
 
             var json = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<TmdbMovie>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return result;
+            if (result == null) return null;
+
+            return new TmdbMovieDto
+            {
+                Title = result.Title,
+                OriginalTitle = result.OriginalTitle,
+                Overview = result.Overview,
+                ReleaseDate = result.ReleaseDate?.Length >= 4 ? result.ReleaseDate.Substring(0,4) : "",
+                PosterPath = string.IsNullOrEmpty(result.PosterPath) ? null : $"https://image.tmdb.org/t/p/w342{result.PosterPath}",
+                BackgroundPath = string.IsNullOrEmpty(result.BackgroundPath) ? null : $"https://image.tmdb.org/t/p/w342{result.BackgroundPath}",
+                Actors = result.Credits?.Cast?.Take(9).Select(a => new PersonDto
+                {
+                    Name = a.Name,
+                    PhotoUrl = string.IsNullOrEmpty(a.ProfilePath) ? null : $"https://image.tmdb.org/t/p/w185{a.ProfilePath}"
+                }).ToList() ?? new List<PersonDto>(),
+                Directors = result.Credits?.Crew?.Where(c => c.Job == "Director").Select(d => new PersonDto
+                {
+                    Name = d.Name,
+                    PhotoUrl = string.IsNullOrEmpty(d.ProfilePath) ? null : $"https://image.tmdb.org/t/p/w185{d.ProfilePath}"
+                }).ToList() ?? new List<PersonDto>()
+
+            };
         }
 
         public async Task<TmdbMovie?> GetMovieDetailsAsync(int tmdbId)

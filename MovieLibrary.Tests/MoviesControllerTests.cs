@@ -9,6 +9,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Runtime.InteropServices.Marshalling;
+using System.Dynamic;
 
 namespace MovieLibrary.Tests;
 
@@ -274,6 +275,48 @@ public class MoviesControllerTests
         Assert.Equal(movieDto.Title, "Test Movie");
         Assert.Equal(movieDto.OriginalTitle, "Test Movie Original");
         Assert.Equal(movieDto.Description, "Description");
+    }
+
+    // Movie Credits
+    [Fact]
+    public async Task TmdbMovieWithCredits()
+    {
+        var mockTmdb = new Mock<ITmdbService>();
+
+        var movie = new TmdbMovieDto
+        {
+            Id = 123,
+            Title = "Test Movie",
+            PosterPath = "/poster.jpg",
+            ReleaseDate = "2022-01-01",
+            Overview = "Some description",
+            OriginalTitle = "Test Original",
+            BackgroundPath = "/bg.jpg",
+            Actors = new List<PersonDto>
+            {
+                new PersonDto { Name = "Actor One", PhotoUrl = "https://image.tmdb.org/t/p/w185/actor1.jpg" },
+                new PersonDto { Name = "Actor Two", PhotoUrl = null }
+            },
+                Directors = new List<PersonDto>
+            {
+                new PersonDto { Name = "Director One", PhotoUrl = null }
+            }
+        };
+
+        mockTmdb.Setup(s => s.GetMovieWithCreditsAsync(123)).ReturnsAsync(movie);
+
+        var controller = new MoviesController(null, mockTmdb.Object);
+        var result = await controller.TmdbMovieDetails(123) as JsonResult;
+
+        Assert.NotNull(result);
+
+        var data = result?.Value as TmdbMovieDto;
+
+        Assert.Equal("Actor One", data.Actors[0].Name);
+        Assert.Equal("https://image.tmdb.org/t/p/w185/actor1.jpg", data.Actors[0].PhotoUrl);
+
+        Assert.Single(data.Directors);
+        Assert.Equal("Director One", data.Directors[0].Name);
     }
 }
 
