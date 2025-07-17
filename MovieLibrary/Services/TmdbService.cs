@@ -1,4 +1,5 @@
-﻿using MovieLibrary.Models;
+﻿using Microsoft.Extensions.Options;
+using MovieLibrary.Models;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,10 +12,10 @@ namespace MovieLibrary.Services
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
 
-        public TmdbService(HttpClient httpClient, string apiKey)
+        public TmdbService(HttpClient httpClient, IOptions<TmdbSettings> options)
         {
             _httpClient = httpClient;
-            _apiKey = apiKey;
+            _apiKey = options.Value.ApiKey;
         }
 
         public async Task<TmdbSearchResult?> SearchMovieAsync(string query)
@@ -66,7 +67,7 @@ namespace MovieLibrary.Services
             };
         }
 
-        public async Task<TmdbMovie?> GetMovieDetailsAsync(int tmdbId)
+        /*public async Task<TmdbMovie?> GetMovieDetailsAsync(int tmdbId)
         {
             var url = $"https://api.themoviedb.org/3/movie/{tmdbId}?api_key={_apiKey}&language=cs-CZ";
             var response = await _httpClient.GetAsync(url);
@@ -77,7 +78,7 @@ namespace MovieLibrary.Services
             var json = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<TmdbMovie>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return result;
-        }
+        }*/
     }
 
     public class TmdbSearchResult
@@ -144,5 +145,10 @@ namespace MovieLibrary.Services
 
         [JsonPropertyName("credits")]
         public TmdbCredits? Credits { get; set; }
+    }
+
+    public class TmdbSettings
+    {
+        public string ApiKey { get; set; }
     }
 }

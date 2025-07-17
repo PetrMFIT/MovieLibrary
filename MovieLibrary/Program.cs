@@ -7,17 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=movies.db"));
-builder.Services.AddHttpClient<TmdbService>(client =>
-{
-    client.BaseAddress = new Uri("https://www.themoviedb.org/");
-});
+    options.UseSqlite("Data Source=Data/movies.db"));
+builder.Services.Configure<TmdbSettings>(builder.Configuration.GetSection("Tmdb"));
 
-var tmdbApiKey = builder.Configuration["Tmdb:ApiKey"];
-builder.Services.AddSingleton<TmdbService>(sp =>
+builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
 {
-    var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TmdbService));
-    return new TmdbService(httpClient, tmdbApiKey);
+    client.BaseAddress = new Uri("https://api.themoviedb.org/3/");
 });
 
 var app = builder.Build();
